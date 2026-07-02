@@ -113,6 +113,19 @@ html, body {
   transform: translateX(-50%) scale(0.94);
 }
 
+/* Back / home button, top-left, so there is always a way out of a level or the
+   level-select screen back to the title. */
+.tbtn-back {
+  pointer-events: auto;
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  border-radius: 8px;
+}
+
 #fullscreen {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
