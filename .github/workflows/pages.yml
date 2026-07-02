@@ -1,0 +1,38 @@
+# Publish Redline to GitHub Pages so it can be played (and installed offline) on
+# phones, tablets, and Chromebooks. Runs on every push to main, plus a manual
+# button. Turn it on once in the repo: Settings -> Pages -> Source: GitHub Actions.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a newer run replace an in-progress one instead of queueing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Package the site (the whole repo is static files)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
