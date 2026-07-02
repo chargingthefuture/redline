@@ -67,6 +67,7 @@
   const G = {
     scene: "title", // title | play | clear | gameover | win | pause
     sceneLock: 0, // frames to ignore menu buttons right after a scene change
+    tap: false, // a bare screen tap this frame (used to advance menus on touch)
     levelIndex: 0,
     lives: 3,
     score: 0,
@@ -826,20 +827,24 @@
       updateEntities();
       updateCamera();
       G.time += STEP / 1000;
+      // Only the dedicated pause control (touch ❚❚ button / Enter / gamepad
+      // Start) pauses. A bare screen tap does nothing during play, so the
+      // movement and jump buttons never pause the game.
       if (menu && Input.pressed("start")) setScene("pause");
     } else if (G.scene === "pause") {
-      if (menu && Input.pressed("start")) setScene("play");
+      if (menu && (Input.pressed("start") || G.tap)) setScene("play");
     } else if (G.scene === "title") {
-      if (menu && Input.anyPressed()) { Sfx.select(); startGame(); }
+      if (menu && (Input.anyPressed() || G.tap)) { Sfx.select(); startGame(); }
     } else if (G.scene === "clear") {
-      if (menu && advancePressed()) {
+      if (menu && (advancePressed() || G.tap)) {
         G.levelIndex++;
         loadLevel(G.levelIndex);
         setScene("play");
       }
     } else if (G.scene === "gameover" || G.scene === "win") {
-      if (menu && advancePressed()) { Sfx.select(); startGame(); }
+      if (menu && (advancePressed() || G.tap)) { Sfx.select(); startGame(); }
     }
+    G.tap = false; // consumed once per frame
   }
 
   function advancePressed() {
@@ -874,6 +879,14 @@
   }
   window.addEventListener("keydown", firstInteraction, { once: true });
   window.addEventListener("pointerdown", firstInteraction, { once: true });
+
+  // A tap on the play area (not on a control button — those sit on top and get
+  // the event first) counts as "advance" on menu screens. During play it is
+  // ignored, so tapping the screen never pauses on a phone.
+  canvas.addEventListener("pointerdown", function () {
+    Sfx.resume();
+    G.tap = true;
+  });
 
   // Mute toggle on M.
   window.addEventListener("keydown", (e) => {

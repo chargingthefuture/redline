@@ -16,6 +16,8 @@
   const keyHeld = new Set();   // actions currently held via keyboard
   const touchHeld = new Set(); // actions currently held via touch buttons
   let padHeld = new Set();     // actions from the gamepad this frame
+  let touchPulse = new Set();  // touch presses since the last poll (so a very
+                               // fast tap still registers for one frame)
 
   let current = new Set();     // union of all sources, this frame
   let previous = new Set();    // union, previous frame (for edge detection)
@@ -82,6 +84,7 @@
       const press = function (e) {
         e.preventDefault();
         touchHeld.add(action);
+        touchPulse.add(action); // guarantee at least one polled frame
         el.classList.add("pressed");
         revealTouch();
       };
@@ -104,14 +107,23 @@
       if (overlay) overlay.classList.remove("hidden");
     }
 
-    // Any real touch anywhere reveals the on-screen pad (once).
+    // The first real touch reveals the on-screen pad (once). It does NOT count
+    // as any action on its own — the game reads a bare screen tap as "advance"
+    // only on menu screens (see js/game.js), so tapping the buttons during play
+    // never pauses.
     window.addEventListener(
       "touchstart",
       function () {
         if (!touchSeen) revealTouch();
-        // touch also counts as "start" for the title/continue screens
-        touchHeld.add("start");
-        setTimeout(() => touchHeld.delete("start"), 60);
+      },
+      { passive: true }
+    );
+    // Some touch browsers (older iOS) may not fire pointer events; make sure the
+    // pad shows up on a pointerdown too.
+    window.addEventListener(
+      "pointerdown",
+      function (e) {
+        if (e.pointerType === "touch" && !touchSeen) revealTouch();
       },
       { passive: true }
     );
@@ -127,7 +139,8 @@
     poll() {
       pollGamepad();
       previous = current;
-      current = new Set([...keyHeld, ...touchHeld, ...padHeld]);
+      current = new Set([...keyHeld, ...touchHeld, ...padHeld, ...touchPulse]);
+      touchPulse = new Set(); // a pulse lasts exactly one poll
     },
     held(action) {
       return current.has(action);
