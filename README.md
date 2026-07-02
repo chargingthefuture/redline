@@ -16,7 +16,8 @@ the same time, so pick up whatever is in reach.
 | Jump | `Space` or `Z` / `X` | `A` (or any face button) | `A` button |
 | Roll | hold `Down` while running | hold D-pad down while running | ▼ button while running |
 | Spin dash | crouch (`Down`) + tap `Jump`, then release `Down` | crouch + tap `A`, release down | hold ▼ + tap `A`, release ▼ |
-| Pause | `Enter` | `Start` | tap the screen once |
+| Pause | `Enter` | `Start` | the `❚❚` button (top of screen) |
+| Start / continue a menu | `Enter` / `Space` | `A` / `Start` | tap anywhere |
 | Mute sound | `M` | — | — |
 
 Collect rings — they are your shield. Get hit with rings and you scatter them but

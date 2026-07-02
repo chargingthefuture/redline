@@ -94,6 +94,24 @@ html, body {
   border-color: rgba(255, 200, 60, 0.8);
 }
 
+/* Dedicated pause button, top-centre, so pausing needs its own tap and the
+   movement/jump buttons never pause the game. */
+.tbtn-pause {
+  pointer-events: auto;
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+.tbtn-pause:active,
+.tbtn-pause.pressed {
+  transform: translateX(-50%) scale(0.94);
+}
+
 #fullscreen {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
