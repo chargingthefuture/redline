@@ -11,11 +11,16 @@
   const TILE = 32;
   const VIEW_W = 640;
   const VIEW_H = 360;
+  const MAX_RENDER_SCALE = 3;
   const STEP = 1000 / 60; // fixed timestep in ms
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
+
+  function setRenderScale() {
+    ctx.setTransform(canvas.width / VIEW_W, 0, 0, canvas.height / VIEW_H, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+  }
 
   // ---- Physics tuning (per fixed step) ----
   const PHYS = {
@@ -931,6 +936,15 @@
     if (ch > H) { ch = H; cw = Math.round((H * 16) / 9); }
     canvas.style.width = cw + "px";
     canvas.style.height = ch + "px";
+
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_RENDER_SCALE);
+    const pixelW = Math.max(VIEW_W, Math.round(cw * dpr));
+    const pixelH = Math.max(VIEW_H, Math.round(ch * dpr));
+    if (canvas.width !== pixelW || canvas.height !== pixelH) {
+      canvas.width = pixelW;
+      canvas.height = pixelH;
+    }
+    setRenderScale();
   }
   window.addEventListener("resize", layout);
   window.addEventListener("orientationchange", layout);

@@ -33,14 +33,13 @@ html, body {
 }
 
 /* The canvas is centred in the stage and sized in pixels by layout() to the
-   largest 16:9 box that fits. Pixel art stays crisp rather than blurry. */
+   largest 16:9 box that fits. The JS backing store tracks the display size so
+   large screens get a sharper render instead of a stretched low-res canvas. */
 #game {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   background: #1a1030;
   touch-action: none;
 }
