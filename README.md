@@ -1,7 +1,7 @@
 # Redline
 
 A fast, offline side-scrolling platformer — run, jump, roll, and spin-dash through
-three acts collecting rings, in the spirit of the classic 16-bit speed games. It is an
+six acts collecting rings, in the spirit of the classic 16-bit speed games. It is an
 original game (its own hero, enemies, and levels), built to play on a phone, a tablet, or
 a Chromebook with **no internet connection** once it has loaded once.
 
@@ -72,7 +72,7 @@ publishes the game.
 |---|---|
 | `index.html` | the game page |
 | `css/style.css` | layout, the touch pad, scaling to fit the screen |
-| `js/levels.js` | the three acts, as text tile maps |
+| `js/levels.js` | the six acts, as text tile maps |
 | `js/input.js` | one place that turns keyboard, gamepad, and touch into game actions |
 | `js/audio.js` | sound effects made from tones (no audio files) |
 | `js/game.js` | physics, collision, enemies, camera, drawing, and game flow |
