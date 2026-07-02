@@ -14,10 +14,14 @@ permissions:
   pages: write
   id-token: write
 
-# Let a newer run replace an in-progress one instead of queueing.
+# Only one Pages deployment at a time, but let an in-progress one finish rather
+# than cancelling it. Cancelling a Pages deploy mid-flight leaves it stuck on
+# GitHub's side, and the next run then hangs in "queued" until it times out —
+# which is what was making the deploys fail when several pushes landed close
+# together.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
