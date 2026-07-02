@@ -812,8 +812,8 @@
     ctx.fillText(window.LEVELS[G.selectedLevel].name, VIEW_W / 2, 292);
     ctx.fillStyle = "rgba(255,255,255,0.72)";
     ctx.font = "13px system-ui, sans-serif";
-    ctx.fillText("Arrows / D-pad to choose · A / Space / Enter to play", VIEW_W / 2, 322);
-    ctx.fillText("Clearing a selected act returns here for more testing", VIEW_W / 2, 342);
+    ctx.fillText("◀ ▶ / arrows to choose · A / Space / tap to play", VIEW_W / 2, 322);
+    ctx.fillText("⌂ button / Esc / B to go back to the title", VIEW_W / 2, 342);
     ctx.textAlign = "left";
   }
 
@@ -840,8 +840,9 @@
       drawLevelSelect();
     } else if (G.scene === "pause") {
       centerText([
-        { t: "PAUSED", big: true, gap: 44 },
-        { t: "Press Start / Enter to resume", small: true },
+        { t: "PAUSED", big: true, gap: 40 },
+        { t: "Start / Enter / tap to resume", small: true, gap: 22 },
+        { t: "⌂ button / Esc / B to quit to " + (G.playMode === "select" ? "Level Select" : "title"), small: true },
       ]);
     } else if (G.scene === "clear") {
       centerText([
@@ -894,7 +895,21 @@
 
   function returnToTitle() {
     G.playMode = "campaign";
+    G.menuChoice = 0;
+    loadLevel(0); // a world to sit behind the title
     setScene("title");
+  }
+
+  // "Back" from a level or the pause screen: in Level Select mode step back to
+  // the act grid; in Campaign mode go all the way to the title.
+  function quitToHome() {
+    Sfx.select();
+    if (G.playMode === "select") {
+      loadLevel(G.selectedLevel);
+      setScene("levelselect");
+    } else {
+      returnToTitle();
+    }
   }
 
   function moveTitleChoice(dir) {
@@ -920,9 +935,11 @@
       // Only the dedicated pause control (touch ❚❚ button / Enter / gamepad
       // Start) pauses. A bare screen tap does nothing during play, so the
       // movement and jump buttons never pause the game.
-      if (menu && Input.pressed("start")) setScene("pause");
+      if (menu && Input.pressed("back")) quitToHome();
+      else if (menu && Input.pressed("start")) setScene("pause");
     } else if (G.scene === "pause") {
-      if (menu && (Input.pressed("start") || G.tap)) setScene("play");
+      if (menu && Input.pressed("back")) quitToHome();
+      else if (menu && (Input.pressed("start") || G.tap)) setScene("play");
     } else if (G.scene === "title") {
       if (menu && (Input.pressed("up") || Input.pressed("left"))) moveTitleChoice(-1);
       else if (menu && (Input.pressed("down") || Input.pressed("right"))) moveTitleChoice(1);
@@ -935,13 +952,16 @@
         }
       }
     } else if (G.scene === "levelselect") {
-      if (menu && Input.pressed("left")) moveSelectedLevel(-1);
+      if (menu && Input.pressed("back")) { Sfx.select(); returnToTitle(); }
+      else if (menu && Input.pressed("left")) moveSelectedLevel(-1);
       else if (menu && Input.pressed("right")) moveSelectedLevel(1);
       else if (menu && Input.pressed("up")) moveSelectedLevel(-5);
       else if (menu && Input.pressed("down")) moveSelectedLevel(5);
       else if (menu && (advancePressed() || G.tap)) { Sfx.select(); startSelectedLevel(); }
     } else if (G.scene === "clear") {
-      if (menu && (advancePressed() || G.tap)) {
+      if (menu && Input.pressed("back")) {
+        quitToHome();
+      } else if (menu && (advancePressed() || G.tap)) {
         if (G.playMode === "select") {
           G.selectedLevel = G.levelIndex;
           loadLevel(G.selectedLevel);
@@ -953,7 +973,7 @@
         }
       }
     } else if (G.scene === "gameover" || G.scene === "win") {
-      if (menu && (advancePressed() || G.tap)) {
+      if (menu && (advancePressed() || G.tap || Input.pressed("back"))) {
         Sfx.select();
         if (G.playMode === "select") {
           loadLevel(G.selectedLevel);
@@ -1078,5 +1098,8 @@
     get playerY() { return G.player ? G.player.y : 0; },
     get level() { return G.levelIndex; },
     get grounded() { return G.player ? G.player.grounded : false; },
+    get playMode() { return G.playMode; },
+    get selectedLevel() { return G.selectedLevel; },
+    get menuChoice() { return G.menuChoice; },
   };
 })();

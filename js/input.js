@@ -11,7 +11,7 @@
  *   if (Input.pressed('jump')) ...// did it go down this frame (edge)
  */
 (function () {
-  const ACTIONS = ["left", "right", "up", "down", "jump", "start"];
+  const ACTIONS = ["left", "right", "up", "down", "jump", "start", "back"];
 
   const keyHeld = new Set();   // actions currently held via keyboard
   const touchHeld = new Set(); // actions currently held via touch buttons
@@ -31,14 +31,15 @@
     ArrowDown: "down", KeyS: "down",
     Space: "jump", KeyZ: "jump", KeyJ: "jump", KeyK: "jump", KeyX: "jump",
     Enter: "start",
+    Escape: "back", Backspace: "back",
   };
 
   window.addEventListener("keydown", function (e) {
     const action = KEYMAP[e.code];
     if (action) {
       keyHeld.add(action);
-      // stop the page from scrolling on arrows/space
-      if (e.code.startsWith("Arrow") || e.code === "Space") e.preventDefault();
+      // stop the page from scrolling on arrows/space, or navigating back on Backspace
+      if (e.code.startsWith("Arrow") || e.code === "Space" || e.code === "Backspace") e.preventDefault();
     }
   });
 
@@ -56,8 +57,10 @@
       const b = pad.buttons;
       const a = pad.axes;
       const on = (i) => b[i] && (b[i].pressed || b[i].value > 0.5);
-      // Face button A (and B/X/Y as a fallback) = jump.
-      if (on(0) || on(1) || on(2) || on(3)) padHeld.add("jump");
+      // Face buttons: A (0) jumps, with X/Y (2/3) as a jump fallback; B (1) is
+      // "back" so you can leave a level or menu with the pad.
+      if (on(0) || on(2) || on(3)) padHeld.add("jump");
+      if (on(1)) padHeld.add("back");
       // D-pad.
       if (on(14)) padHeld.add("left");
       if (on(15)) padHeld.add("right");
