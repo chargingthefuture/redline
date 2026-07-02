@@ -8,6 +8,11 @@ a Chromebook with **no internet connection** once it has loaded once.
 It plays with a **gamepad**, a **keyboard**, or **on-screen touch buttons** — all three at
 the same time, so pick up whatever is in reach.
 
+The title screen has two start options: **Campaign** plays acts sequentially, advancing
+after each clear, while **Level Select** lets you choose a specific act for testing. In
+Level Select, use arrows / D-pad to pick an act and `A` / `Space` / `Enter` to play it.
+Clearing or failing a selected act returns to Level Select.
+
 ## How to play
 
 | Action | Keyboard | Gamepad | Touch |

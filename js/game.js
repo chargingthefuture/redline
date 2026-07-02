@@ -70,9 +70,12 @@
 
   // ---- Game state ----
   const G = {
-    scene: "title", // title | play | clear | gameover | win | pause
+    scene: "title", // title | levelselect | play | clear | gameover | win | pause
     sceneLock: 0, // frames to ignore menu buttons right after a scene change
     tap: false, // a bare screen tap this frame (used to advance menus on touch)
+    menuChoice: 0,
+    selectedLevel: 0,
+    playMode: "campaign", // campaign | select
     levelIndex: 0,
     lives: 3,
     score: 0,
@@ -763,6 +766,61 @@
     ctx.textAlign = "left";
   }
 
+  function drawTitleMenu() {
+    centerText([
+      { t: "REDLINE", big: true, color: C.hero, gap: 48 },
+      { t: "an offline speed dash", small: true, gap: 36 },
+      { t: (G.menuChoice === 0 ? "▶ " : "  ") + "Campaign", gap: 30, color: G.menuChoice === 0 ? C.ring : C.text },
+      { t: (G.menuChoice === 1 ? "▶ " : "  ") + "Level Select", gap: 38, color: G.menuChoice === 1 ? C.ring : C.text },
+      { t: "Up/Down to choose · A / Space / Enter to select", small: true, gap: 22 },
+      { t: "Campaign advances after each clear", small: true, gap: 22 },
+    ]);
+  }
+
+  function drawLevelSelect() {
+    ctx.fillStyle = "rgba(0,0,0,0.68)";
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 30px system-ui, sans-serif";
+    ctx.fillStyle = C.ring;
+    ctx.fillText("LEVEL SELECT", VIEW_W / 2, 58);
+
+    const cols = 5;
+    const cellW = 104;
+    const cellH = 54;
+    const startX = (VIEW_W - cols * cellW) / 2 + cellW / 2;
+    const startY = 118;
+    ctx.font = "bold 16px system-ui, sans-serif";
+    for (let i = 0; i < window.LEVELS.length; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * cellW;
+      const y = startY + row * cellH;
+      const selected = i === G.selectedLevel;
+      ctx.fillStyle = selected ? "rgba(255,210,60,0.95)" : "rgba(255,255,255,0.14)";
+      ctx.fillRect(x - 42, y - 18, 84, 36);
+      ctx.strokeStyle = selected ? C.text : "rgba(255,255,255,0.22)";
+      ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(x - 42, y - 18, 84, 36);
+      ctx.fillStyle = selected ? "#20120a" : C.text;
+      ctx.fillText("ACT " + (i + 1), x, y);
+    }
+
+    ctx.fillStyle = C.text;
+    ctx.font = "bold 15px system-ui, sans-serif";
+    ctx.fillText(window.LEVELS[G.selectedLevel].name, VIEW_W / 2, 292);
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = "13px system-ui, sans-serif";
+    ctx.fillText("Arrows / D-pad to choose · A / Space / Enter to play", VIEW_W / 2, 322);
+    ctx.fillText("Clearing a selected act returns here for more testing", VIEW_W / 2, 342);
+    ctx.textAlign = "left";
+  }
+
+  function continuePrompt() {
+    return G.playMode === "select" ? "Press A / Space / Tap to return to Level Select" : "Press A / Space / Tap to continue";
+  }
+
   function render() {
     drawBackground();
     drawTiles();
@@ -777,13 +835,9 @@
     if (G.scene === "play" || G.scene === "pause") drawHud();
 
     if (G.scene === "title") {
-      centerText([
-        { t: "REDLINE", big: true, color: C.hero, gap: 48 },
-        { t: "an offline speed dash", small: true, gap: 40 },
-        { t: "Press  A / Space / Tap  to run", gap: 34 },
-        { t: "Move: arrows or stick   Jump: A/Space", small: true, gap: 22 },
-        { t: "Hold Down at speed to roll · crouch+jump to spin dash", small: true, gap: 22 },
-      ]);
+      drawTitleMenu();
+    } else if (G.scene === "levelselect") {
+      drawLevelSelect();
     } else if (G.scene === "pause") {
       centerText([
         { t: "PAUSED", big: true, gap: 44 },
@@ -793,19 +847,19 @@
       centerText([
         { t: "ACT CLEAR!", big: true, color: C.ring, gap: 46 },
         { t: "Score " + G.score, gap: 34 },
-        { t: "Press A / Space / Tap to continue", small: true },
+        { t: continuePrompt(), small: true },
       ]);
     } else if (G.scene === "gameover") {
       centerText([
         { t: "GAME OVER", big: true, color: C.hero, gap: 46 },
         { t: "Score " + G.score, gap: 34 },
-        { t: "Press A / Space / Tap to try again", small: true },
+        { t: G.playMode === "select" ? "Press A / Space / Tap to return to Level Select" : "Press A / Space / Tap for title", small: true },
       ]);
     } else if (G.scene === "win") {
       centerText([
         { t: "YOU WIN!", big: true, color: C.ring, gap: 46 },
         { t: "Final score " + G.score, gap: 34 },
-        { t: "Press A / Space / Tap to play again", small: true },
+        { t: G.playMode === "select" ? "Press A / Space / Tap to return to Level Select" : "Press A / Space / Tap for title", small: true },
       ]);
     }
   }
@@ -817,11 +871,42 @@
   }
 
   function startGame() {
+    startCampaign();
+  }
+
+  function startCampaign() {
     G.lives = 3;
     G.score = 0;
+    G.playMode = "campaign";
     G.levelIndex = 0;
     loadLevel(0);
     setScene("play");
+  }
+
+  function startSelectedLevel() {
+    G.lives = 3;
+    G.score = 0;
+    G.playMode = "select";
+    G.levelIndex = G.selectedLevel;
+    loadLevel(G.levelIndex);
+    setScene("play");
+  }
+
+  function returnToTitle() {
+    G.playMode = "campaign";
+    setScene("title");
+  }
+
+  function moveTitleChoice(dir) {
+    G.menuChoice = (G.menuChoice + dir + 2) % 2;
+    Sfx.select();
+  }
+
+  function moveSelectedLevel(delta) {
+    const count = window.LEVELS.length;
+    G.selectedLevel = (G.selectedLevel + delta + count) % count;
+    loadLevel(G.selectedLevel);
+    Sfx.select();
   }
 
   function step() {
@@ -839,15 +924,44 @@
     } else if (G.scene === "pause") {
       if (menu && (Input.pressed("start") || G.tap)) setScene("play");
     } else if (G.scene === "title") {
-      if (menu && (Input.anyPressed() || G.tap)) { Sfx.select(); startGame(); }
+      if (menu && (Input.pressed("up") || Input.pressed("left"))) moveTitleChoice(-1);
+      else if (menu && (Input.pressed("down") || Input.pressed("right"))) moveTitleChoice(1);
+      else if (menu && (advancePressed() || G.tap)) {
+        Sfx.select();
+        if (G.menuChoice === 0) startCampaign();
+        else {
+          loadLevel(G.selectedLevel);
+          setScene("levelselect");
+        }
+      }
+    } else if (G.scene === "levelselect") {
+      if (menu && Input.pressed("left")) moveSelectedLevel(-1);
+      else if (menu && Input.pressed("right")) moveSelectedLevel(1);
+      else if (menu && Input.pressed("up")) moveSelectedLevel(-5);
+      else if (menu && Input.pressed("down")) moveSelectedLevel(5);
+      else if (menu && (advancePressed() || G.tap)) { Sfx.select(); startSelectedLevel(); }
     } else if (G.scene === "clear") {
       if (menu && (advancePressed() || G.tap)) {
-        G.levelIndex++;
-        loadLevel(G.levelIndex);
-        setScene("play");
+        if (G.playMode === "select") {
+          G.selectedLevel = G.levelIndex;
+          loadLevel(G.selectedLevel);
+          setScene("levelselect");
+        } else {
+          G.levelIndex++;
+          loadLevel(G.levelIndex);
+          setScene("play");
+        }
       }
     } else if (G.scene === "gameover" || G.scene === "win") {
-      if (menu && (advancePressed() || G.tap)) { Sfx.select(); startGame(); }
+      if (menu && (advancePressed() || G.tap)) {
+        Sfx.select();
+        if (G.playMode === "select") {
+          loadLevel(G.selectedLevel);
+          setScene("levelselect");
+        } else {
+          returnToTitle();
+        }
+      }
     }
     G.tap = false; // consumed once per frame
   }
