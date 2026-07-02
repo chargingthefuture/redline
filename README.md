@@ -54,6 +54,10 @@ installed app. Once the page has loaded over the internet one time, it keeps wor
 the network off. Installing it to the home screen also gives you a full-screen view with no
 browser address bar.
 
+Updates are automatic: whenever you open the game with a connection it fetches the latest
+version, so there is no need to hard-refresh (which phones make hard to do anyway). With no
+connection it plays the last version it saved.
+
 - **iPhone / iPad (Safari):** open the game's web address, tap the **Share** button, then
   **Add to Home Screen**. Launch it from the new icon — it runs full-screen and offline.
 - **Android (Chrome):** open the address, then use the menu → **Install app** (or **Add to

@@ -1,14 +1,15 @@
 /* Service worker for Redline.
  *
- * It caches every file the game needs on install, then serves those files from
- * the cache first. Once you have opened the game online once, it runs with the
- * network turned off — which is what makes "add to home screen" work offline on
- * a phone or a Chromebook.
+ * Strategy: network-first. When you are online, every file is fetched fresh so
+ * you always get the latest game — no hard refresh needed (mobile browsers make
+ * that hard anyway). When you are offline, or the network is slow, it falls back
+ * to the copy saved in the cache, so "add to home screen" still plays with no
+ * connection. Each successful online fetch also refreshes the saved copy.
  *
- * When you add or rename a file the game loads, add it to FILES below AND bump
- * CACHE_VERSION, or returning players will keep the old cached copy.
+ * When you add or rename a file the game loads, add it to FILES below so the very
+ * first offline visit has it cached. Bumping CACHE_VERSION clears the old cache.
  */
-const CACHE_VERSION = "redline-v3";
+const CACHE_VERSION = "redline-v4";
 
 const FILES = [
   ".",
@@ -25,6 +26,10 @@ const FILES = [
   "assets/apple-touch-icon.png",
 ];
 
+// How long to wait for the network before serving the cached copy, so a flaky
+// mobile connection still loads the game quickly from cache.
+const NETWORK_TIMEOUT = 3000;
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(FILES)).then(() => self.skipWaiting())
@@ -40,20 +45,37 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((resp) => {
-          // cache newly seen same-origin files so later visits work offline too
-          if (resp && resp.ok && event.request.url.startsWith(self.location.origin)) {
-            const copy = resp.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copy));
-          }
-          return resp;
-        })
-        .catch(() => caches.match("index.html"));
-    })
-  );
+  const req = event.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).origin !== self.location.origin) return; // don't touch cross-origin
+  event.respondWith(networkFirst(req));
 });
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE_VERSION);
+
+  // Kick off the network request. On success it also refreshes the cache. It
+  // never rejects (resolves to null on failure) so racing it is safe.
+  const fromNetwork = fetch(req)
+    .then((resp) => {
+      if (resp && resp.ok) cache.put(req, resp.clone());
+      return resp;
+    })
+    .catch(() => null);
+
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), NETWORK_TIMEOUT));
+
+  // Prefer the network, but don't wait forever on a slow connection.
+  const winner = await Promise.race([fromNetwork, timeout]);
+  if (winner) return winner;
+
+  // Network was slow, failed, or offline — serve the cached copy.
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  // Nothing cached for this request; wait out the network one last time, then
+  // fall back to the app shell (covers navigations to unseen URLs).
+  const late = await fromNetwork;
+  if (late) return late;
+  return (await cache.match("index.html")) || Response.error();
+}
