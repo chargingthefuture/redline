@@ -8,7 +8,7 @@
  * When you add or rename a file the game loads, add it to FILES below AND bump
  * CACHE_VERSION, or returning players will keep the old cached copy.
  */
-const CACHE_VERSION = "redline-v2";
+const CACHE_VERSION = "redline-v3";
 
 const FILES = [
   ".",

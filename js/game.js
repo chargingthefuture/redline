@@ -903,6 +903,40 @@
     });
   }
 
+  // Keep the game landscape and filling the screen. In the browser (not an
+  // installed app) iOS ignores the manifest's landscape hint, and rotation lock
+  // can keep Safari in portrait — so when the screen is portrait on a touch
+  // device we rotate the whole stage 90 degrees. The player turns the phone
+  // sideways and sees an upright, full-screen landscape game either way.
+  const stage = document.getElementById("stage");
+  function layout() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const touch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const rotate = touch && vh > vw;
+    let W, H;
+    if (rotate) {
+      stage.style.width = vh + "px";
+      stage.style.height = vw + "px";
+      stage.style.transform = "translateX(" + vw + "px) rotate(90deg)";
+      W = vh; H = vw;
+    } else {
+      stage.style.width = vw + "px";
+      stage.style.height = vh + "px";
+      stage.style.transform = "none";
+      W = vw; H = vh;
+    }
+    // Largest 16:9 box that fits inside the stage.
+    let cw = W, ch = Math.round((W * 9) / 16);
+    if (ch > H) { ch = H; cw = Math.round((H * 16) / 9); }
+    canvas.style.width = cw + "px";
+    canvas.style.height = ch + "px";
+  }
+  window.addEventListener("resize", layout);
+  window.addEventListener("orientationchange", layout);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", layout);
+  layout();
+
   loadLevel(0); // load so the title screen has a world behind it
   requestAnimationFrame(frame);
 

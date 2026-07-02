@@ -40,9 +40,14 @@ Any static file server works (`npx serve`, `http-server`, etc.).
 
 ## Play it on your phone or Chromebook (offline)
 
+Redline plays in **landscape** — turn the phone sideways and the game fills the screen. If
+your phone's rotation lock is on and it stays portrait, the game rotates itself so you can
+still turn the device and play; no need to unlock rotation.
+
 Redline is a Progressive Web App — a web page a device can save and run offline like an
 installed app. Once the page has loaded over the internet one time, it keeps working with
-the network off.
+the network off. Installing it to the home screen also gives you a full-screen view with no
+browser address bar.
 
 - **iPhone / iPad (Safari):** open the game's web address, tap the **Share** button, then
   **Add to Home Screen**. Launch it from the new icon — it runs full-screen and offline.
