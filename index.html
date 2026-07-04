@@ -63,7 +63,9 @@
       });
 
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').then(function (reg) {
+        // updateViaCache 'none' keeps the browser from serving sw.js itself from
+        // its HTTP cache, so a new worker is picked up on the next load.
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
           // Check for a newer version now, and again whenever the app is brought
           // back to the foreground (how you usually return to a phone app).
           reg.update();
