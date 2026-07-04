@@ -9,7 +9,7 @@
  * When you add or rename a file the game loads, add it to FILES below so the very
  * first offline visit has it cached. Bumping CACHE_VERSION clears the old cache.
  */
-const CACHE_VERSION = "redline-v4";
+const CACHE_VERSION = "redline-v5";
 
 const FILES = [
   ".",
@@ -54,9 +54,12 @@ self.addEventListener("fetch", (event) => {
 async function networkFirst(req) {
   const cache = await caches.open(CACHE_VERSION);
 
-  // Kick off the network request. On success it also refreshes the cache. It
-  // never rejects (resolves to null on failure) so racing it is safe.
-  const fromNetwork = fetch(req)
+  // Kick off the network request with "no-store" so it bypasses the browser's
+  // HTTP cache and always pulls the newest file from the server — that is what
+  // makes every online load a real refresh. On success it also saves the file
+  // to the offline cache. It never rejects (resolves to null on failure) so
+  // racing it is safe.
+  const fromNetwork = fetch(req, { cache: "no-store" })
     .then((resp) => {
       if (resp && resp.ok) cache.put(req, resp.clone());
       return resp;
